@@ -99,6 +99,7 @@ uint64_t dictGenCaseHashFunction(const unsigned char *buf, int len) {
 
 /* Reset a hash table already initialized with ht_init().
  * NOTE: This function should only be called by ht_destroy(). */
+//初始化hash表
 static void _dictReset(dictht *ht)
 {
     ht->table = NULL;
@@ -111,6 +112,7 @@ static void _dictReset(dictht *ht)
 dict *dictCreate(dictType *type,
         void *privDataPtr)
 {
+    //内存分配
     dict *d = zmalloc(sizeof(*d));
 
     _dictInit(d,type,privDataPtr);
@@ -136,6 +138,7 @@ int dictResize(dict *d)
 {
     int minimal;
 
+    // dict_can_resize 为1 表示可以rehash dict->rehashidx>-1表示正在rehash
     if (!dict_can_resize || dictIsRehashing(d)) return DICT_ERR;
     minimal = d->ht[0].used;
     if (minimal < DICT_HT_INITIAL_SIZE)
@@ -144,6 +147,7 @@ int dictResize(dict *d)
 }
 
 /* Expand or create the hash table */
+//扩容操作，size为要扩展的容量
 int dictExpand(dict *d, unsigned long size)
 {
     /* the size is invalid if it is smaller than the number of
@@ -152,6 +156,7 @@ int dictExpand(dict *d, unsigned long size)
         return DICT_ERR;
 
     dictht n; /* the new hash table */
+    //获取2^n
     unsigned long realsize = _dictNextPower(size);
 
     /* Rehashing to the same table size is not useful. */
@@ -171,8 +176,9 @@ int dictExpand(dict *d, unsigned long size)
     }
 
     /* Prepare a second hash table for incremental rehashing */
-    //将ht[2]的大小初始化为ht[1].used*2 的2^n
+    //将ht[1]的大小初始化为ht[0].used*2 的2^n
     d->ht[1] = n;
+    //从ht[0] table 第一个槽位开始rehash
     d->rehashidx = 0;
     return DICT_OK;
 }
@@ -954,6 +960,7 @@ static int _dictExpandIfNeeded(dict *d)
 }
 
 /* Our hash table capability is a power of two */
+//返回2的幂次数
 static unsigned long _dictNextPower(unsigned long size)
 {
     unsigned long i = DICT_HT_INITIAL_SIZE;

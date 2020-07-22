@@ -75,13 +75,13 @@ typedef struct dictType {
 
 /* This is our hash table structure. Every dictionary has two of this as we
  * implement incremental rehashing, for the old to the new table. */
-//哈希表
+//哈希表，采用数组+单向链表的结构，链表解决hash冲突
 typedef struct dictht {
     //哈希表数组
     dictEntry **table;
     //哈希表大小
     unsigned long size;
-    //哈希表大小掩码，用于计算索引值，总是等于size-1
+    //哈希表大小掩码，用于计算索引值，总是等于size-1 ,这个值与hash值决定了放在数组什么位置
     unsigned long sizemask;
     //已有节点的数量
     unsigned long used;
