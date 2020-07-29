@@ -134,6 +134,7 @@ int _dictInit(dict *d, dictType *type,
 
 /* Resize the table to the minimal size that contains all the elements,
  * but with the invariant of a USED/BUCKETS ratio near to <= 1 */
+ //扩容
 int dictResize(dict *d)
 {
     int minimal;
@@ -192,6 +193,10 @@ int dictExpand(dict *d, unsigned long size)
  * guaranteed that this function will rehash even a single bucket, since it
  * will visit at max N*10 empty buckets in total, otherwise the amount of
  * work it does would be unbound and the function may block for a long time. */
+/**
+ * 如果返回1，说明还没有迁移完毕，为了避免每次只检查一个槽位的数据，并且该槽位是空的，这种情况
+* 可以继续检查该槽位的下一个槽位，并且最多检查要迁移的槽位数*10
+*/
 int dictRehash(dict *d, int n) {
     //n为要迁移的槽位数
     int empty_visits = n*10; /* Max number of empty buckets to visit. */
@@ -216,6 +221,7 @@ int dictRehash(dict *d, int n) {
 
             nextde = de->next;
             /* Get the index in the new hash table */
+            //从新hash并且获取新的槽位，头部插入
             h = dictHashKey(d, de->key) & d->ht[1].sizemask;
             de->next = d->ht[1].table[h];
             d->ht[1].table[h] = de;
@@ -228,6 +234,7 @@ int dictRehash(dict *d, int n) {
     }
 
     /* Check if we already rehashed the whole table... */
+    //检查是否所有的数据都已经迁移完，若是:ht[0]=ht[1]
     if (d->ht[0].used == 0) {
         zfree(d->ht[0].table);
         d->ht[0] = d->ht[1];
@@ -248,6 +255,7 @@ long long timeInMilliseconds(void) {
 }
 
 /* Rehash for an amount of time between ms milliseconds and ms+1 milliseconds */
+//服务定时rehash
 int dictRehashMilliseconds(dict *d, int ms) {
     long long start = timeInMilliseconds();
     int rehashes = 0;
@@ -272,6 +280,9 @@ static void _dictRehashStep(dict *d) {
 }
 
 /* Add an element to the target hash table */
+/**
+ * 向字典中添加一个元素
+ */
 int dictAdd(dict *d, void *key, void *val)
 {
     dictEntry *entry = dictAddRaw(d,key,NULL);
@@ -304,7 +315,7 @@ dictEntry *dictAddRaw(dict *d, void *key, dictEntry **existing)
     long index;
     dictEntry *entry;
     dictht *ht;
-
+    //如果正在扩容，帮忙进行一次扩容操作
     if (dictIsRehashing(d)) _dictRehashStep(d);
 
     /* Get the index of the new element, or -1 if

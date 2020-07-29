@@ -752,6 +752,9 @@ void tryResizeHashTables(int dbid) {
  *
  * The function returns 1 if some rehashing was performed, otherwise 0
  * is returned. */
+/**
+ * write/read操作会触发rehash，如果没有外部请求这个字典，ht[0] ht[1]会同时存在，系统定时每1ms调用rehash，
+ * /
 int incrementallyRehash(int dbid) {
     /* Keys dictionary */
     if (dictIsRehashing(server.db[dbid].dict)) {

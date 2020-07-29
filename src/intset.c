@@ -94,6 +94,7 @@ static void _intsetSet(intset *is, int pos, int64_t value) {
 }
 
 /* Create an empty intset. */
+//初始化一个整数集合
 intset *intsetNew(void) {
     intset *is = zmalloc(sizeof(intset));
     is->encoding = intrev32ifbe(INTSET_ENC_INT16);
@@ -102,6 +103,7 @@ intset *intsetNew(void) {
 }
 
 /* Resize the intset */
+//将整数集合重新分配内存
 static intset *intsetResize(intset *is, uint32_t len) {
     uint32_t size = len*intrev32ifbe(is->encoding);
     is = zrealloc(is,sizeof(intset)+size);
@@ -112,6 +114,7 @@ static intset *intsetResize(intset *is, uint32_t len) {
  * sets "pos" to the position of the value within the intset. Return 0 when
  * the value is not present in the intset and sets "pos" to the position
  * where "value" can be inserted. */
+//检查元素在数组中的位置，如果没有，pos为可插入的位置
 static uint8_t intsetSearch(intset *is, int64_t value, uint32_t *pos) {
     int min = 0, max = intrev32ifbe(is->length)-1, mid = -1;
     int64_t cur = -1;
@@ -132,6 +135,7 @@ static uint8_t intsetSearch(intset *is, int64_t value, uint32_t *pos) {
         }
     }
 
+    //2分法查找
     while(max >= min) {
         mid = ((unsigned int)min + (unsigned int)max) >> 1;
         cur = _intsetGet(is,mid);
@@ -154,10 +158,16 @@ static uint8_t intsetSearch(intset *is, int64_t value, uint32_t *pos) {
 }
 
 /* Upgrades the intset to a larger encoding and inserts the given integer. */
+/**
+ *要插入元素的编码类型比元数组中元素的编码类型高，将整数集合的编码升级为要添加元素的编码 
+ */
 static intset *intsetUpgradeAndAdd(intset *is, int64_t value) {
     uint8_t curenc = intrev32ifbe(is->encoding);
     uint8_t newenc = _intsetValueEncoding(value);
     int length = intrev32ifbe(is->length);
+    /**
+     * 编码升级，说明要插入的元素大于数组中的最大值或者小于数组中的最小值，并且是负数，如果为最大，插在数组的tail ，如果是负数，插在数组的0 index处
+     */ 
     int prepend = value < 0 ? 1 : 0;
 
     /* First set new encoding and resize */
@@ -201,6 +211,7 @@ static void intsetMoveTail(intset *is, uint32_t from, uint32_t to) {
 }
 
 /* Insert an integer in the intset */
+//添加一个元素
 intset *intsetAdd(intset *is, int64_t value, uint8_t *success) {
     uint8_t valenc = _intsetValueEncoding(value);
     uint32_t pos;

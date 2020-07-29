@@ -33,8 +33,11 @@
 #include <stdint.h>
 
 typedef struct intset {
+    //元素的编码方式
     uint32_t encoding;
+    //整数集合的元素个数，即len(contents)
     uint32_t length;
+    //整型集合的内容，按大小从小到大有序排序，无重复
     int8_t contents[];
 } intset;
 

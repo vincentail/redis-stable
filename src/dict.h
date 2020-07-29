@@ -89,9 +89,9 @@ typedef struct dictht {
 
 //字典
 typedef struct dict {
-    //类型特定函数 保存了一簇用于操作特定类型键值对的函数，redis会位用途不同的字典设置不同类型特定函数
+    //类型特定函数 保存了一簇用于操作特定类型键值对的函数，redis会为用途不同的字典设置不同类型特定函数
     dictType *type;
-    //私有数据，需要存给上面特定类型函数的可选参数
+    //私有数据，需要传给上面特定类型函数的可选参数
     void *privdata;
     //哈希表，使用两个是为了rehash操作，在扩容时，将其中一个dictht上的键值对rehash到另外一个dictht上面，完成之后释放掉空间并交换两个dictht的角色
     dictht ht[2];
@@ -104,6 +104,9 @@ typedef struct dict {
      */
     long rehashidx; /* rehashing not in progress if rehashidx == -1 */
 
+    //terators特指safe iterators的数量，safe iterators就是在迭代过程中能增加，
+    //删除dictEntry的iterators。而非safe iterators不计入其中，因为这些iterators只能进行next()操作，
+    //不影响dict的rehash
     unsigned long iterators; /* number of iterators currently running */
 } dict;
 
